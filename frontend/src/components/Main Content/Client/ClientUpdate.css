@@ -1,0 +1,11 @@
+.alert {
+  --bs-alert-padding-y: 4px !important;
+}
+
+.alert-dismissible .btn-close {
+  top: -13px !important;
+}
+
+.alert-dismissible .btn-close::after {
+  color: red;
+}

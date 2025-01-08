@@ -1,0 +1,19 @@
+/* .card {
+  border: none;
+  box-shadow: none;
+} */
+
+.card-header {
+  border-bottom: none;
+}
+
+.btn-cancel {
+  border: 1px solid grey;
+  font-weight: bold;
+}
+
+.btn-cancel:hover {
+  background-color: grey;
+  color: white;
+  font-weight: bold;
+}

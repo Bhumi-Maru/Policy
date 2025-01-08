@@ -1,0 +1,15 @@
+.card-header {
+  border-bottom: none;
+}
+
+.btn-submit {
+  color: white;
+  background-color: #405189;
+  font-weight: bold;
+}
+
+.btn-submit:hover {
+  background-color: white;
+  color: #405189;
+  border: 1px solid #405189;
+}

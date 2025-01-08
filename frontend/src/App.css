@@ -1,0 +1,52 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow: hidden;
+  font-family: Poppins, sans-serif;
+}
+
+a {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.card-header {
+  border-bottom: none;
+}
+
+.btn-submit {
+  color: white;
+  background-color: #405189;
+  font-weight: bold;
+}
+
+.btn-submit:hover {
+  background-color: white;
+  color: #405189;
+  border: 1px solid #405189;
+}
+
+/* tooltip */
+.custom-tooltip .tooltip-inner {
+  background-color: #405189;
+  color: white;
+  font-size: 14px;
+  border-radius: 5px;
+}
+
+.custom-tooltip .tooltip-arrow {
+  color: #405189;
+}
+
+/* input */
+
+.css-13cymwt-control {
+  min-height: 30px !important;
+  border-color: #dee2e6 !important;
+  border-radius: 6px !important;
+}

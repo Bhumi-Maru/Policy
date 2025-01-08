@@ -1,0 +1,17 @@
+.breadcrumb-item.active {
+  color: #405189;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  padding-top: 4px;
+}
+
+.navbar-header .btn-topbar {
+  height: 47px;
+  width: 51px;
+  border-radius: 50%;
+  text-align: center;
+  align-items: center;
+  -webkit-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}

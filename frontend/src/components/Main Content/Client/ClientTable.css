@@ -1,0 +1,217 @@
+.card-header {
+  border-bottom: none;
+}
+
+.add-client-btn {
+  border: none;
+  background-color: #405189;
+  color: white;
+  border-radius: 5px;
+  font-size: 15px;
+  width: 20%;
+  font-weight: bold;
+}
+
+.add-client-btn:hover {
+  background-color: white;
+  border: 1px solid #405189;
+  color: #405189;
+  font-weight: bold;
+}
+
+th.gridjs-th {
+  text-align: center;
+  padding: 7px 0px;
+}
+
+td.gridjs-td {
+  text-align: center;
+  padding: 5px 0px;
+}
+
+/* address */
+
+td[data-column-id="street address"] {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+  padding: 0px 11px;
+  vertical-align: middle;
+}
+
+/* Wrapper for truncated/full address and eye icon */
+.address-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Truncated address styling */
+.truncated-address {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  display: inline-block;
+}
+
+/* Full address styling */
+.full-address {
+  white-space: normal;
+  display: inline-block;
+}
+
+/* Eye button styling */
+.view-address-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 5px;
+}
+
+.view-address-btn:hover {
+  color: #405189;
+}
+
+/* sort btn */
+
+.table .sort::before {
+  top: 13px;
+}
+
+.table .sort::after {
+  top: 8px;
+}
+
+/* serial number */
+.table .srno_sort::after {
+  right: 40px;
+}
+
+.table .srno_sort::before {
+  right: 40px;
+}
+
+/* name sort */
+
+.table .name_sort::after {
+  right: 122px;
+}
+
+.table .name_sort::before {
+  right: 122px;
+}
+
+/* address sort */
+.table .email_sort::after {
+  right: 140px;
+}
+
+.table .email_sort::before {
+  right: 140px;
+}
+
+/* phone sort */
+.table .phone_sort::after {
+  right: 72px;
+}
+
+.table .phone_sort::before {
+  right: 72px;
+}
+
+/* address sort */
+.table .address_sort::after {
+  right: 9px;
+}
+
+.table .address_sort::before {
+  right: 9px;
+}
+
+/* document sort */
+.table .document_sort::after {
+  right: 16px;
+}
+
+.table .document_sort::before {
+  right: 16px;
+}
+
+/* action sort */
+.table .action_sort::after {
+  right: 18px;
+}
+
+.table .action_sort::before {
+  right: 18px;
+}
+
+/* delete btn */
+
+.remove a i {
+  color: #f06548;
+}
+
+.remove a i:hover {
+  color: #fb2f06;
+}
+
+/* edit btn */
+
+.edit a i {
+  color: #099885;
+}
+
+.edit a i:hover {
+  color: #05d5b9;
+}
+
+.edit button:hover i {
+  color: #fff;
+}
+
+/* add btn */
+
+.add-btn {
+  background-color: #0ab39c;
+  border: 1px solid #0ab39c;
+}
+
+.add-btn:hover {
+  background-color: #099885;
+  border-color: #099885;
+}
+
+/* close btn */
+
+.close-btn {
+  background-color: #e7eaee;
+  font-size: 13px;
+}
+
+.close-btn:hover {
+  background-color: #ced4da;
+}
+
+/* update btn */
+
+.update-btn {
+  background-color: #0ab39c;
+  color: #fff;
+  border-color: #0ab39c;
+  font-size: 13px;
+}
+
+.update-btn:hover {
+  background-color: #099885;
+  border-color: #099885;
+}
+
+/* tooltip */
+.tooltip-inner {
+  background-color: #405189;
+  color: white;
+}
