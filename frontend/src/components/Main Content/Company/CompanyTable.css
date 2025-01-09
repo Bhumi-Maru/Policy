@@ -7,13 +7,29 @@
   border-bottom: none;
 }
 
-.btn-cancel {
-  border: 1px solid grey;
-  font-weight: bold;
+.cancel-btn {
+  background-color: #f3f6f9;
+  border-color: #f3f6f9;
+  font-size: 13px;
 }
 
-.btn-cancel:hover {
-  background-color: grey;
+.cancel-btn:hover {
+  background-color: #ced4da;
+  border-color: #ced4da;
+}
+
+.submit-btn {
+  background-color: #0ab39c;
+  border-color: #0ab39c;
+  font-size: 13px;
+}
+
+.submit-btn:hover {
+  background-color: #099885;
+  border-color: #099885;
   color: white;
-  font-weight: bold;
+}
+
+.form-control::placeholder {
+  font-size: 13px;
 }

@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import * as bootstrap from "bootstrap";
+import "./CompanyTable.css";
 
 export default function CompanyTable({ handleMenuClick }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [companys, setCompanys] = useState([]);
-
-  console.log(companys);
 
   // Fetch client data from API
   useEffect(() => {
@@ -45,7 +44,61 @@ export default function CompanyTable({ handleMenuClick }) {
     }
   };
 
-  // Handle deleting a client
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const companyName = e.target.querySelector("#customername-field").value;
+
+    try {
+      const response = await fetch("http://localhost:8000/api/company", {
+        method: "POST",
+        body: JSON.stringify({ companyName }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("showModal")
+        );
+        modal.hide();
+
+        e.target.reset();
+
+        const newCompany = await response.json();
+        setCompanys((prevCompanys) => [...prevCompanys, newCompany]);
+
+        showDeleteToast("Company added successfully!");
+      } else {
+        console.error("Error adding company");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  //Handle Adding a client
+  const handleAdd = () => {
+    const modal = new bootstrap.Modal(document.getElementById("showModal"));
+    modal.show();
+
+    const closeButton = document.getElementById("close-modal");
+    const cancelButton = document.getElementById("btn-close");
+    const cleanupListeners = () => {
+      closeButton.removeEventListener("click", cancelModal);
+      cancelButton.removeEventListener("click", cancelModal);
+    };
+
+    const cancelModal = () => {
+      modal.hide();
+      cleanupListeners();
+    };
+
+    closeButton.addEventListener("click", cancelModal);
+    cancelButton.addEventListener("click", cancelModal);
+  };
+
+  // Handle deleting a company
   const handleDelete = (companyToDelete) => {
     const modal = new bootstrap.Modal(
       document.getElementById("deleteRecordModal")
@@ -64,7 +117,9 @@ export default function CompanyTable({ handleMenuClick }) {
       try {
         const response = await fetch(
           `http://localhost:8000/api/company/${companyToDelete._id}`,
-          { method: "DELETE" }
+          {
+            method: "DELETE",
+          }
         );
         if (response.ok) {
           setCompanys((prevCompanys) =>
@@ -73,7 +128,7 @@ export default function CompanyTable({ handleMenuClick }) {
             )
           );
           modal.hide();
-          showDeleteToast("Record deleted successfully!");
+          showDeleteToast("Company deleted successfully!");
         } else {
           const errorData = await response.json();
           showDeleteToast(`Failed to delete company: ${errorData.message}`);
@@ -143,13 +198,27 @@ export default function CompanyTable({ handleMenuClick }) {
                       <div className="row g-4 mb-3 d-flex flex-row-reverse">
                         <div className="col-sm-auto">
                           <div>
-                            <Link
+                            {/* <Link
                               type="button"
                               className="btn btn-success add-btn"
                               id="create-btn"
                               data-bs-target="#showModal"
                               to="/policy-add"
                               onClick={() => handleMenuClick("Add Policy")}
+                              style={{
+                                fontSize: "13px",
+                                color: "white",
+                              }}
+                            >
+                              <i className="ri-add-line align-bottom me-1"></i>{" "}
+                              Add
+                            </Link> */}
+                            <Link
+                              type="button"
+                              className="btn btn-success add-btn"
+                              id="create-btn"
+                              data-bs-target="#showModal"
+                              onClick={() => handleAdd("Add Policy")}
                               style={{
                                 fontSize: "13px",
                                 color: "white",
@@ -218,7 +287,7 @@ export default function CompanyTable({ handleMenuClick }) {
                           </thead>
                           <tbody className="list form-check-all">
                             {currentData.length > 0 ? (
-                              currentData.map((client, index) => (
+                              currentData.map((company, index) => (
                                 <tr key={index}>
                                   {/* Serial Number */}
                                   <td
@@ -237,7 +306,7 @@ export default function CompanyTable({ handleMenuClick }) {
                                     className="company_name"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    {client.companyName}
+                                    {company.companyName}
                                   </td>
 
                                   {/* Edit and Delete Actions */}
@@ -250,7 +319,7 @@ export default function CompanyTable({ handleMenuClick }) {
                                       <div className="edit">
                                         {console.log(
                                           "Company ID:",
-                                          companys._id
+                                          companys.id
                                         )}
                                         <Link
                                           to={`/client-update-form/${companys._id}`}
@@ -266,7 +335,7 @@ export default function CompanyTable({ handleMenuClick }) {
                                       {/* Delete Button */}
                                       <div className="remove">
                                         <Link
-                                          onClick={() => handleDelete(companys)}
+                                          onClick={() => handleDelete(company)}
                                           style={{ textDecoration: "none" }}
                                         >
                                           <i className="ri-delete-bin-2-line"></i>
@@ -399,6 +468,7 @@ export default function CompanyTable({ handleMenuClick }) {
               </div>
             </div>
 
+            {/* delete modal */}
             <div
               className="modal fade zoomIn"
               id="deleteRecordModal"
@@ -451,6 +521,98 @@ export default function CompanyTable({ handleMenuClick }) {
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* add modal */}
+            <div
+              className="modal fade"
+              id="showModal"
+              tabIndex="-1"
+              aria-labelledby="exampleModalLabel"
+              aria-hidden="true"
+            >
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                  <div className="modal-header bg-light p-3">
+                    <h5
+                      className="modal-title"
+                      id="exampleModalLabel"
+                      style={{ fontSize: "16.25px", color: "#495057" }}
+                    >
+                      Add Company
+                    </h5>
+                    <button
+                      type="button"
+                      className="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                      id="close-modal"
+                    ></button>
+                  </div>
+                  <form
+                    className="tablelist-form"
+                    onSubmit={handleSubmit}
+                    autocomplete="off"
+                  >
+                    <div className="modal-body">
+                      <div
+                        className="mb-3"
+                        id="modal-id"
+                        style={{ display: "none" }}
+                      >
+                        <label for="id-field" className="form-label">
+                          ID
+                        </label>
+                        <input
+                          type="text"
+                          id="id-field"
+                          className="form-control"
+                          placeholder="ID"
+                          readonly
+                        />
+                      </div>
+
+                      <div class="mb-3">
+                        <label
+                          for="customername-field"
+                          className="form-label"
+                          style={{ fontSize: "13px" }}
+                        >
+                          Company Name
+                        </label>
+                        <input
+                          type="text"
+                          id="customername-field"
+                          className="form-control company_name_input"
+                          placeholder="Enter Name"
+                          required
+                        />
+                        <div className="invalid-feedback">
+                          Please enter a customer name.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <div class="hstack gap-2 justify-content-end">
+                        <button
+                          type="button"
+                          className="btn btn-light cancel-btn"
+                          data-bs-dismiss="modal"
+                        >
+                          Close
+                        </button>
+                        <button
+                          type="submit"
+                          className="btn btn-success submit-btn"
+                          id="add-btn"
+                        >
+                          Submit
+                        </button>
+                      </div>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>
