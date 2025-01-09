@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const clientRoutes = express.Router();
 const {
   getAllClients,
   addClient,
@@ -10,16 +10,16 @@ const {
 const { uploadFields } = require("../middleware/uploadMiddleware");
 
 // Add a client
-router.post("/clients", uploadFields, addClient);
+clientRoutes.post("/clients", uploadFields, addClient);
 
 // Get all clients
-router.get("/clients", getAllClients);
+clientRoutes.get("/clients", getAllClients);
 
 // Delete a client
-router.delete("/clients/:id", deleteClient);
+clientRoutes.delete("/clients/:id", deleteClient);
 
 // Update a client
-router.put("/clients/:id", uploadFields, updateClient);
-router.get("/clients/:id", getClientById);
+clientRoutes.put("/clients/:id", uploadFields, updateClient);
+clientRoutes.get("/clients/:id", getClientById);
 
-module.exports = router;
+module.exports = clientRoutes;

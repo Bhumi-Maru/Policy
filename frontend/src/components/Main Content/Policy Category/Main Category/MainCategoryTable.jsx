@@ -2,30 +2,31 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import * as bootstrap from "bootstrap";
 
-export default function CompanyTable({ handleMenuClick }) {
+export default function MainCategoryTable({ handleMenuClick }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [companys, setCompanys] = useState([]);
+  const [mainCategories, setMainCategories] = useState([]);
 
   // Fetch client data from API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/company");
+        const response = await fetch("http://localhost:8000/api/mainCategory");
         const data = await response.json();
-        setCompanys(data);
+        setMainCategories(data);
       } catch (error) {
-        console.error("Error fetching company data:", error);
+        console.error("Error fetching main category data:", error);
       }
     };
     fetchData();
   }, []);
 
   // Filter clients based on search query
-  const filteredData = companys.filter((company) => {
+  const filteredData = mainCategories.filter((mainCategory) => {
     const query = searchQuery.toLowerCase();
     return (
-      company.companyName && company.companyName.toLowerCase().includes(query)
+      mainCategory.mainCategoryName &&
+      mainCategory.mainCategoryName.toLowerCase().includes(query)
     );
   });
 
@@ -44,7 +45,7 @@ export default function CompanyTable({ handleMenuClick }) {
   };
 
   // Handle deleting a client
-  const handleDelete = (companyToDelete) => {
+  const handleDelete = (mainCategoryToDelete) => {
     const modal = new bootstrap.Modal(
       document.getElementById("deleteRecordModal")
     );
@@ -61,24 +62,27 @@ export default function CompanyTable({ handleMenuClick }) {
     const confirmDeletion = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8000/api/company/${companyToDelete._id}`,
+          `http://localhost:8000/api/mainCategory/${mainCategoryToDelete._id}`,
           { method: "DELETE" }
         );
         if (response.ok) {
-          setCompanys((prevCompanys) =>
-            prevCompanys.filter(
-              (company) => company._id !== companyToDelete._id
+          setMainCategories((prevMainCategories) =>
+            prevMainCategories.filter(
+              (mainCategory) => mainCategory._id !== mainCategoryToDelete._id
             )
           );
           modal.hide();
           showDeleteToast("Record deleted successfully!");
         } else {
           const errorData = await response.json();
-          showDeleteToast(`Failed to delete company: ${errorData.message}`);
+          console.log(errorData);
+          showDeleteToast(
+            `Failed to delete main Category: ${errorData.message}`
+          );
         }
       } catch (error) {
-        console.error("Error deleting company:", error);
-        showDeleteToast("An error occurred while deleting the company.");
+        console.error("Error deleting main category:", error);
+        showDeleteToast("An error occurred while deleting the main category.");
       } finally {
         cleanupListeners();
       }
@@ -147,7 +151,9 @@ export default function CompanyTable({ handleMenuClick }) {
                               id="create-btn"
                               data-bs-target="#showModal"
                               to="/policy-add"
-                              onClick={() => handleMenuClick("Add Policy")}
+                              onClick={() =>
+                                handleMenuClick("Add MainCategory")
+                              }
                               style={{
                                 fontSize: "13px",
                                 color: "white",
@@ -199,7 +205,7 @@ export default function CompanyTable({ handleMenuClick }) {
                                   fontWeight: "bold",
                                 }}
                               >
-                                Company Name
+                                Main Category
                               </th>
                               <th
                                 className="action_sort"
@@ -216,7 +222,7 @@ export default function CompanyTable({ handleMenuClick }) {
                           </thead>
                           <tbody className="list form-check-all">
                             {currentData.length > 0 ? (
-                              currentData.map((client, index) => (
+                              currentData.map((mainCategory, index) => (
                                 <tr key={index}>
                                   {/* Serial Number */}
                                   <td
@@ -232,10 +238,10 @@ export default function CompanyTable({ handleMenuClick }) {
 
                                   {/* Company Name */}
                                   <td
-                                    className="company_name"
+                                    className="mainCategory_Name"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    {client.companyName}
+                                    {mainCategory.mainCategoryName}
                                   </td>
 
                                   {/* Edit and Delete Actions */}
@@ -248,12 +254,14 @@ export default function CompanyTable({ handleMenuClick }) {
                                       <div className="edit">
                                         {console.log(
                                           "Company ID:",
-                                          companys.id
+                                          mainCategories.id
                                         )}
                                         <Link
-                                          to={`/client-update-form/${companys._id}`}
+                                          to={`/client-update-form/${mainCategories._id}`}
                                           onClick={() =>
-                                            handleMenuClick("Update Company")
+                                            handleMenuClick(
+                                              "Update Main Category"
+                                            )
                                           }
                                           style={{ textDecoration: "none" }}
                                         >
@@ -264,7 +272,9 @@ export default function CompanyTable({ handleMenuClick }) {
                                       {/* Delete Button */}
                                       <div className="remove">
                                         <Link
-                                          onClick={() => handleDelete(companys)}
+                                          onClick={() =>
+                                            handleDelete(mainCategory)
+                                          }
                                           style={{ textDecoration: "none" }}
                                         >
                                           <i className="ri-delete-bin-2-line"></i>
@@ -333,7 +343,7 @@ export default function CompanyTable({ handleMenuClick }) {
                               <b>
                                 {Math.min(
                                   currentPage * rowsPerPage,
-                                  companys.length
+                                  mainCategories.length
                                 )}
                               </b>{" "}
                               of <b>{filteredData.length}</b> results

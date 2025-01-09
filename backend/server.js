@@ -8,6 +8,9 @@ const clientRoutes = require("./Routes/clientRoutes");
 const policyRouter = require("./Routes/policyRoute");
 const userCreationRouter = require("./Routes/userCreationRoute");
 const agentRouter = require("./Routes/AgentRoutes");
+const companyRouter = require("./Routes/CompanyRoutes");
+const mainCategoryRouter = require("./Routes/mainCategoryRoute");
+const subCategoryRouter = require("./Routes/subCategoryRoutes");
 
 dotenv.config();
 
@@ -22,6 +25,9 @@ app.use("/api", clientRoutes);
 app.use("/api", policyRouter);
 app.use("/api", userCreationRouter);
 app.use("/api", agentRouter);
+app.use("/api", companyRouter);
+app.use("/api", mainCategoryRouter);
+app.use("/api", subCategoryRouter);
 
 app.get("/", (req, res) => {
   res.send("<h1>Hello</h1 >");

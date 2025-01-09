@@ -78,10 +78,9 @@ const addClient = async (req, res) => {
 };
 
 // Fetch all clients
-// clientsController.js
 const getAllClients = async (req, res) => {
   try {
-    const clients = await Client.find({}, "firstName lastName"); // Fetch only required fields
+    const clients = await Client.find({}, "firstName lastName");
     return res.status(200).json(clients);
   } catch (error) {
     console.error("Error fetching clients:", error);

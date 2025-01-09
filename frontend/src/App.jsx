@@ -19,11 +19,11 @@ import Signup from "./components/Authentication/Signup/Signup";
 import Signin from "./components/Authentication/SignIn/Signin";
 import ForgotPassword from "./components/Authentication/Forgot Password/ForgotPassword";
 import CompanyTable from "./components/Main Content/Company/CompanyTable";
-import MainCategory from "./components/Main Content/Policy Category/Main Category/MainCategory";
-import SubCategory from "./components/Main Content/Policy Category/Sub Category/SubCategory";
 import ClientUpdate from "./components/Main Content/Client/ClientUpdate";
 import UserUpdate from "./components/Main Content/User Creation/UserUpdate";
 import UpdateAgent from "./components/Main Content/Agent Add/UpdateAgent";
+import MainCategoryTable from "./components/Main Content/Policy Category/Main Category/MainCategoryTable";
+import SubCategoryTable from "./components/Main Content/Policy Category/Sub Category/SubCategoryTable";
 
 export default function App() {
   const [activeItem, setActiveItem] = useState("");
@@ -47,7 +47,7 @@ export default function App() {
             backgroundColor: "#eff2f7",
             overflowY: "scroll",
             height: "100vh",
-            zIndex: "-1",
+            // zIndex: "-1",
           }}
         >
           <Routes>
@@ -66,16 +66,19 @@ export default function App() {
               }
             />
             {/* company */}
-            <Route path="/company" element={<CompanyTable />} />
+            <Route
+              path="/company"
+              element={<CompanyTable handleMenuClick={handleMenuClick} />}
+            />
             {/* policy category */}
             <Route path="/policy-category" element={<PolicyCategoryTable />} />
             <Route
               path="/policy-category/main-category"
-              element={<MainCategory />}
+              element={<MainCategoryTable handleMenuClick={handleMenuClick} />}
             />
             <Route
               path="/policy-category/sub-category"
-              element={<SubCategory />}
+              element={<SubCategoryTable handleMenuClick={handleMenuClick} />}
             />
             <Route path="/policy-category-form" element={<PolicyCategory />} />
             <Route path="/policy-add" element={<PolicyForm />} />
