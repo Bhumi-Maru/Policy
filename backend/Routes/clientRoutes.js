@@ -1,8 +1,8 @@
 const express = require("express");
 const clientRoutes = express.Router();
 const {
-  getAllClients,
   addClient,
+  getAllClients,
   deleteClient,
   updateClient,
   getClientById,

@@ -98,6 +98,7 @@ export default function App() {
             />
             <Route path="/agent-add" element={<AgentAdd />} />
             <Route path="/agent-update-form/:id" element={<UpdateAgent />} />
+            {/* Authentication */}
             <Route path="/signup" element={<Signup />} />
             <Route path="/signin" element={<Signin />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

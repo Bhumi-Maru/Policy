@@ -80,7 +80,7 @@ const addClient = async (req, res) => {
 // Fetch all clients
 const getAllClients = async (req, res) => {
   try {
-    const clients = await Client.find({}, "firstName lastName");
+    const clients = await Client.find({});
     return res.status(200).json(clients);
   } catch (error) {
     console.error("Error fetching clients:", error);
@@ -88,13 +88,11 @@ const getAllClients = async (req, res) => {
   }
 };
 
-module.exports = { getAllClients };
-
 // Delete client
 const deleteClient = async (req, res) => {
   try {
-    const { id } = req.params; // Get client ID from the URL params
-    const client = await Client.findByIdAndDelete(id); // Find client by ID and delete
+    const { id } = req.params;
+    const client = await Client.findByIdAndDelete(id);
     if (!client) {
       return res.status(404).json({ message: "Client not found" });
     }

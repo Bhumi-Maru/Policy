@@ -7,6 +7,8 @@ export default function CompanyTable({ handleMenuClick }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [companys, setCompanys] = useState([]);
 
+  console.log(companys);
+
   // Fetch client data from API
   useEffect(() => {
     const fetchData = async () => {
@@ -248,7 +250,7 @@ export default function CompanyTable({ handleMenuClick }) {
                                       <div className="edit">
                                         {console.log(
                                           "Company ID:",
-                                          companys.id
+                                          companys._id
                                         )}
                                         <Link
                                           to={`/client-update-form/${companys._id}`}
