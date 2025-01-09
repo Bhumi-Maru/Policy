@@ -7,6 +7,8 @@ export default function CompanyTable({ handleMenuClick }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [companys, setCompanys] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false); // Track if we are in Edit mode
+  const [editCompany, setEditCompany] = useState(null); // Store the company to edit
 
   // Fetch client data from API
   useEffect(() => {
@@ -47,55 +49,72 @@ export default function CompanyTable({ handleMenuClick }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const companyName = e.target.querySelector("#customername-field").value;
-
     try {
-      const response = await fetch("http://localhost:8000/api/company", {
-        method: "POST",
-        body: JSON.stringify({ companyName }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      let response;
+      if (isEditMode && editCompany) {
+        // Update company (PUT request)
+        response = await fetch(
+          `http://localhost:8000/api/company/${editCompany._id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({ companyName }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        // Add new company (POST request)
+        response = await fetch("http://localhost:8000/api/company", {
+          method: "POST",
+          body: JSON.stringify({ companyName }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
 
       if (response.ok) {
         const modal = bootstrap.Modal.getInstance(
           document.getElementById("showModal")
         );
         modal.hide();
-
         e.target.reset();
-
         const newCompany = await response.json();
-        setCompanys((prevCompanys) => [...prevCompanys, newCompany]);
-
-        showDeleteToast("Company added successfully!");
+        if (isEditMode) {
+          // Replace the old company with the updated one
+          setCompanys((prevCompanys) =>
+            prevCompanys.map((company) =>
+              company._id === editCompany._id ? newCompany : company
+            )
+          );
+        } else {
+          setCompanys((prevCompanys) => [...prevCompanys, newCompany]);
+        }
+        setIsEditMode(false); // Reset to Add mode after submitting
+        setEditCompany(null); // Clear the edited company
       } else {
-        console.error("Error adding company");
+        console.error("Error adding/updating company");
       }
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
-  //Handle Adding a client
+  // Handle adding a new company
   const handleAdd = () => {
+    setIsEditMode(false); // Set to Add mode
+    setEditCompany(null); // Clear any existing edit data
     const modal = new bootstrap.Modal(document.getElementById("showModal"));
     modal.show();
+  };
 
-    const closeButton = document.getElementById("close-modal");
-    const cancelButton = document.getElementById("btn-close");
-    const cleanupListeners = () => {
-      closeButton.removeEventListener("click", cancelModal);
-      cancelButton.removeEventListener("click", cancelModal);
-    };
-
-    const cancelModal = () => {
-      modal.hide();
-      cleanupListeners();
-    };
-
-    closeButton.addEventListener("click", cancelModal);
-    cancelButton.addEventListener("click", cancelModal);
+  // Handle editing a company
+  const handleEdit = (company) => {
+    setIsEditMode(true); // Set to Edit mode
+    setEditCompany(company); // Set the company to edit
+    const modal = new bootstrap.Modal(document.getElementById("showModal"));
+    modal.show();
   };
 
   // Handle deleting a company
@@ -107,11 +126,6 @@ export default function CompanyTable({ handleMenuClick }) {
 
     const deleteButton = document.getElementById("delete-record");
     const closeButton = document.getElementById("btn-close");
-
-    const cleanupListeners = () => {
-      deleteButton.removeEventListener("click", confirmDeletion);
-      closeButton.removeEventListener("click", cancelDeletion);
-    };
 
     const confirmDeletion = async () => {
       try {
@@ -136,14 +150,11 @@ export default function CompanyTable({ handleMenuClick }) {
       } catch (error) {
         console.error("Error deleting company:", error);
         showDeleteToast("An error occurred while deleting the company.");
-      } finally {
-        cleanupListeners();
       }
     };
 
     const cancelDeletion = () => {
       modal.hide();
-      cleanupListeners();
     };
 
     deleteButton.addEventListener("click", confirmDeletion);
@@ -198,35 +209,15 @@ export default function CompanyTable({ handleMenuClick }) {
                       <div className="row g-4 mb-3 d-flex flex-row-reverse">
                         <div className="col-sm-auto">
                           <div>
-                            {/* <Link
+                            <button
                               type="button"
                               className="btn btn-success add-btn"
-                              id="create-btn"
-                              data-bs-target="#showModal"
-                              to="/policy-add"
-                              onClick={() => handleMenuClick("Add Policy")}
-                              style={{
-                                fontSize: "13px",
-                                color: "white",
-                              }}
+                              onClick={handleAdd}
+                              style={{ fontSize: "13px", color: "white" }}
                             >
                               <i className="ri-add-line align-bottom me-1"></i>{" "}
                               Add
-                            </Link> */}
-                            <Link
-                              type="button"
-                              className="btn btn-success add-btn"
-                              id="create-btn"
-                              data-bs-target="#showModal"
-                              onClick={() => handleAdd("Add Policy")}
-                              style={{
-                                fontSize: "13px",
-                                color: "white",
-                              }}
-                            >
-                              <i className="ri-add-line align-bottom me-1"></i>{" "}
-                              Add
-                            </Link>
+                            </button>
                           </div>
                         </div>
                         <div className="col-sm">
@@ -244,7 +235,6 @@ export default function CompanyTable({ handleMenuClick }) {
                           </div>
                         </div>
                       </div>
-
                       <div className="table-responsive table-card mt-3 mb-1">
                         <table
                           className="table align-middle table-nowrap"
@@ -254,7 +244,6 @@ export default function CompanyTable({ handleMenuClick }) {
                             <tr>
                               <th
                                 className="srno_sort"
-                                data-sort="serial number"
                                 style={{
                                   fontSize: ".8rem",
                                   fontWeight: "bold",
@@ -264,7 +253,6 @@ export default function CompanyTable({ handleMenuClick }) {
                               </th>
                               <th
                                 className="name_sort"
-                                data-sort="customer_name"
                                 style={{
                                   fontSize: ".8rem",
                                   fontWeight: "bold",
@@ -274,7 +262,6 @@ export default function CompanyTable({ handleMenuClick }) {
                               </th>
                               <th
                                 className="action_sort"
-                                data-sort="action"
                                 style={{
                                   textAlign: "-webkit-center",
                                   fontSize: ".8rem",
@@ -288,19 +275,17 @@ export default function CompanyTable({ handleMenuClick }) {
                           <tbody className="list form-check-all">
                             {currentData.length > 0 ? (
                               currentData.map((company, index) => (
-                                <tr key={index}>
+                                <tr key={company._id}>
                                   {/* Serial Number */}
                                   <td
                                     className="serial number"
-                                    data-sort="serial number"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    &nbsp; &nbsp; &nbsp;
-                                    {(currentPage - 1) * rowsPerPage +
+                                    {currentPage * rowsPerPage -
+                                      rowsPerPage +
                                       index +
                                       1}
                                   </td>
-
                                   {/* Company Name */}
                                   <td
                                     className="company_name"
@@ -308,7 +293,6 @@ export default function CompanyTable({ handleMenuClick }) {
                                   >
                                     {company.companyName}
                                   </td>
-
                                   {/* Edit and Delete Actions */}
                                   <td>
                                     <div
@@ -317,24 +301,18 @@ export default function CompanyTable({ handleMenuClick }) {
                                     >
                                       {/* Edit Button */}
                                       <div className="edit">
-                                        {console.log(
-                                          "Company ID:",
-                                          companys.id
-                                        )}
                                         <Link
-                                          to={`/client-update-form/${companys._id}`}
-                                          onClick={() =>
-                                            handleMenuClick("Update Company")
-                                          }
+                                          to="#"
+                                          onClick={() => handleEdit(company)}
                                           style={{ textDecoration: "none" }}
                                         >
                                           <i className="ri-edit-2-line"></i>
                                         </Link>
                                       </div>
-
                                       {/* Delete Button */}
                                       <div className="remove">
                                         <Link
+                                          to="#"
                                           onClick={() => handleDelete(company)}
                                           style={{ textDecoration: "none" }}
                                         >
@@ -386,7 +364,6 @@ export default function CompanyTable({ handleMenuClick }) {
                           </tbody>
                         </table>
                       </div>
-
                       <div
                         className="gridjs-footer"
                         style={{ boxShadow: "none" }}
@@ -467,155 +444,128 @@ export default function CompanyTable({ handleMenuClick }) {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* delete modal */}
-            <div
-              className="modal fade zoomIn"
-              id="deleteRecordModal"
-              tabindex="-1"
-              aria-hidden="true"
-            >
-              <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
-                  <div
-                    className="modal-header"
-                    style={{ borderBottom: "none" }}
-                  >
-                    <button
-                      type="button"
-                      class="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                      id="btn-close"
-                    ></button>
-                  </div>
-                  <div class="modal-body">
-                    <div class="mt-2 text-center">
-                      <lord-icon
-                        src="https://cdn.lordicon.com/gsqxdxog.json"
-                        trigger="loop"
-                        colors="primary:#f7b84b,secondary:#f06548"
-                        style={{ width: "100px", height: "100px" }}
-                      ></lord-icon>
-                      <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                        <h4>Are you Sure?</h4>
-                        <p class="text-muted mx-4 mb-0">
-                          Are you sure you want to remove this record?
-                        </p>
-                      </div>
-                    </div>
-                    <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                      <button
-                        type="button"
-                        class="btn w-sm btn-light close-btn"
-                        data-bs-dismiss="modal"
-                      >
-                        Close
-                      </button>
-                      <button
-                        type="button"
-                        class="btn w-sm btn-danger remove"
-                        id="delete-record"
-                      >
-                        Yes, Delete It!
-                      </button>
-                    </div>
-                  </div>
+      {/* Delete Modal */}
+      <div
+        className="modal fade zoomIn"
+        id="deleteRecordModal"
+        tabIndex="-1"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header" style={{ borderBottom: "none" }}>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                id="btn-close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="mt-2 text-center">
+                <lord-icon
+                  src="https://cdn.lordicon.com/gsqxdxog.json"
+                  trigger="loop"
+                  colors="primary:#f7b84b,secondary:#f06548"
+                  style={{ width: "100px", height: "100px" }}
+                ></lord-icon>
+                <div className="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                  <h4>Are you Sure?</h4>
+                  <p className="text-muted mx-4 mb-0">
+                    Are you sure you want to remove this record?
+                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* add modal */}
-            <div
-              className="modal fade"
-              id="showModal"
-              tabIndex="-1"
-              aria-labelledby="exampleModalLabel"
-              aria-hidden="true"
-            >
-              <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
-                  <div className="modal-header bg-light p-3">
-                    <h5
-                      className="modal-title"
-                      id="exampleModalLabel"
-                      style={{ fontSize: "16.25px", color: "#495057" }}
-                    >
-                      Add Company
-                    </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                      id="close-modal"
-                    ></button>
-                  </div>
-                  <form
-                    className="tablelist-form"
-                    onSubmit={handleSubmit}
-                    autocomplete="off"
-                  >
-                    <div className="modal-body">
-                      <div
-                        className="mb-3"
-                        id="modal-id"
-                        style={{ display: "none" }}
-                      >
-                        <label for="id-field" className="form-label">
-                          ID
-                        </label>
-                        <input
-                          type="text"
-                          id="id-field"
-                          className="form-control"
-                          placeholder="ID"
-                          readonly
-                        />
-                      </div>
-
-                      <div class="mb-3">
-                        <label
-                          for="customername-field"
-                          className="form-label"
-                          style={{ fontSize: "13px" }}
-                        >
-                          Company Name
-                        </label>
-                        <input
-                          type="text"
-                          id="customername-field"
-                          className="form-control company_name_input"
-                          placeholder="Enter Name"
-                          required
-                        />
-                        <div className="invalid-feedback">
-                          Please enter a customer name.
-                        </div>
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <div class="hstack gap-2 justify-content-end">
-                        <button
-                          type="button"
-                          className="btn btn-light cancel-btn"
-                          data-bs-dismiss="modal"
-                        >
-                          Close
-                        </button>
-                        <button
-                          type="submit"
-                          className="btn btn-success submit-btn"
-                          id="add-btn"
-                        >
-                          Submit
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
+              <div className="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button
+                  type="button"
+                  className="btn w-sm btn-light close-btn"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn w-sm btn-danger remove"
+                  id="delete-record"
+                >
+                  Yes, Delete It!
+                </button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add/Edit Modal */}
+      <div
+        className="modal fade"
+        id="showModal"
+        tabIndex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-light p-3">
+              <h5
+                className="modal-title"
+                id="exampleModalLabel"
+                style={{ fontSize: "16.25px", color: "#495057" }}
+              >
+                {isEditMode ? "Edit Company" : "Add Company"}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body p-4">
+                <div className="mb-3">
+                  <label
+                    htmlFor="customername-field"
+                    className="form-label"
+                    style={{ fontSize: "13px", color: "#495057" }}
+                  >
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    id="customername-field"
+                    className="form-control"
+                    defaultValue={isEditMode ? editCompany.companyName : ""}
+                    required
+                    placeholder="Enter company name"
+                    style={{ fontSize: "13px" }}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-light cancel-btn"
+                  data-bs-dismiss="modal"
+                  style={{ fontSize: "13px" }}
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary submit-btn"
+                  style={{ fontSize: "13px" }}
+                >
+                  {isEditMode ? "Update" : "Add"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
