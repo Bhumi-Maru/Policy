@@ -152,14 +152,14 @@ export default function MainCategoryTable({ handleMenuClick }) {
                               data-bs-target="#showModal"
                               to="/policy-add"
                               onClick={() =>
-                                handleMenuClick("Add MainCategory")
+                                handleMenuClick("Add Main Category")
                               }
                               style={{
                                 fontSize: "13px",
                                 color: "white",
                               }}
                             >
-                              <i className="ri-add-line align-bottom me-1"></i>{" "}
+                              <i className="ri-add-line align-bottom me-1"></i>
                               Add
                             </Link>
                           </div>
