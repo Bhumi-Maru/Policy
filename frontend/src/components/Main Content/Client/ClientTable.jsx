@@ -209,7 +209,7 @@ export default function ClientTable({ handleMenuClick }) {
                                   fontWeight: "bold",
                                 }}
                               >
-                                SR. No.
+                                SR No.
                               </th>
                               <th
                                 style={{

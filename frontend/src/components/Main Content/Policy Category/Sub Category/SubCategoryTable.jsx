@@ -193,7 +193,7 @@ export default function SubCategoryTable({ handleMenuClick }) {
                                   fontWeight: "bold",
                                 }}
                               >
-                                SR. No.
+                                SR No.
                               </th>
                               <th
                                 className="name_sort"

@@ -7,6 +7,10 @@
   border-bottom: none;
 }
 
+.gridjs-pagination .gridjs-pages button.gridjs-currentPage:hover {
+  color: white;
+}
+
 .cancel-btn {
   background-color: #f3f6f9;
   border-color: #f3f6f9;
