@@ -2,9 +2,21 @@ const mongoose = require("mongoose");
 
 const policySchema = new mongoose.Schema({
   clientName: { type: mongoose.Schema.Types.ObjectId, ref: "Client" },
-  companyName: { type: String, required: true },
-  mainCategory: { type: String, required: true },
-  subCategory: { type: String, required: true },
+  companyName: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Company",
+    required: true,
+  },
+  mainCategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "MainCategory",
+    required: true,
+  },
+  subCategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "SubCategory",
+    required: true,
+  },
   issueDate: { type: String, required: true },
   expiryDate: { type: String, required: true },
   policyAmount: { type: String, required: true },

@@ -19,6 +19,9 @@ export default function PolicyForm() {
     policyAmount: "",
     policyAttachment: null,
   });
+  const [companies, setCompanies] = useState([]);
+  const [mainCategories, setMainCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
 
   // Fetch options from backend
   useEffect(() => {
@@ -26,18 +29,44 @@ export default function PolicyForm() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch("http://localhost:8000/api/clients");
-        if (!response.ok) {
-          throw new Error("Failed to fetch client data");
+        // Fetch clients
+        const clientRes = await fetch("http://localhost:8000/api/clients");
+        // Fetch companies
+        const companyRes = await fetch("http://localhost:8000/api/company");
+
+        const mainCategoryRes = await fetch(
+          "http://localhost:8000/api/mainCategory"
+        );
+
+        const subCategoryRes = await fetch(
+          "http://localhost:8000/api/subCategory"
+        );
+
+        if (
+          !clientRes.ok ||
+          !companyRes.ok ||
+          !mainCategoryRes.ok ||
+          !subCategoryRes.ok
+        ) {
+          throw new Error("Failed to fetch data");
         }
-        const data = await response.json();
-        setClients(data);
+
+        const clientsData = await clientRes.json();
+        const companiesData = await companyRes.json();
+        const mainCategoryData = await mainCategoryRes.json();
+        const subCategoryData = await subCategoryRes.json();
+
+        setClients(clientsData);
+        setCompanies(companiesData);
+        setMainCategories(mainCategoryData);
+        setSubCategories(subCategoryData);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
+
     fetchOptions();
   }, []);
 
@@ -46,38 +75,28 @@ export default function PolicyForm() {
     label: `${client.firstName} ${client.lastName}`,
   }));
 
-  const companyOptions = [
-    ...new Map(
-      clients.map((client) => [
-        client.companyName,
-        { value: client.companyName, label: client.companyName },
-      ])
-    ).values(),
-  ];
+  // Company dropdown options
+  const companyOptions = companies.map((company) => ({
+    value: company._id,
+    label: company.companyName,
+  }));
 
-  const mainCategoryOptions = [
-    ...new Map(
-      clients.map((client) => [
-        client.mainCategory,
-        { value: client.mainCategory, label: client.mainCategory },
-      ])
-    ).values(),
-  ];
+  const mainCategoryOptions = mainCategories.map((category) => ({
+    value: category._id,
+    label: category.mainCategoryName,
+  }));
 
-  const subCategoryOptions = [
-    ...new Map(
-      clients.map((client) => [
-        client.subCategory,
-        { value: client.subCategory, label: client.subCategory },
-      ])
-    ).values(),
-  ];
+  const subCategoryOptions = subCategories.map((sub) => ({
+    value: sub._id,
+    label: sub.subCategoryName,
+  }));
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.clientName) newErrors.clientName = "Client Name is required";
-    if (!formData.companyPolicy)
-      newErrors.companyPolicy = "Company Policy is required";
+    if (!formData.companyName)
+      newErrors.companyName = "Company Name is required";
+
     if (!formData.mainCategory)
       newErrors.mainCategory = "Main Category is required";
     if (!formData.subCategory)
@@ -123,7 +142,7 @@ export default function PolicyForm() {
       });
 
       if (response.ok) {
-        navigate("/client");
+        navigate("/policy");
       } else {
         alert("Failed to create policy. Please try again.");
       }
@@ -156,22 +175,14 @@ export default function PolicyForm() {
                       <>
                         {/* Client Name */}
                         <div className="col-md-3">
-                          <label
-                            htmlFor="clientName"
-                            className="form-label"
-                            style={{ fontSize: "13px", fontWeight: "bold" }}
-                          >
-                            Client Name
-                          </label>
+                          <label>Client Name</label>
                           <Select
-                            id="clientName"
                             options={clientOptions}
                             onChange={(option) =>
                               handleSelectChange("clientName", option)
                             }
                             placeholder="Select a client"
                           />
-
                           {errors.clientName && (
                             <small className="text-danger">
                               {errors.clientName}
@@ -181,46 +192,30 @@ export default function PolicyForm() {
 
                         {/* Company Name */}
                         <div className="col-md-3">
-                          <label
-                            htmlFor="companyPolicy"
-                            className="form-label"
-                            style={{ fontSize: "13px", fontWeight: "bold" }}
-                          >
-                            Company Name
-                          </label>
+                          <label>Company Name</label>
                           <Select
-                            id="companyPolicy"
                             options={companyOptions}
                             onChange={(option) =>
-                              handleSelectChange("companyPolicy", option)
+                              handleSelectChange("companyName", option)
                             }
                             placeholder="Select a company"
-                            isClearable
                           />
-                          {errors.companyPolicy && (
+                          {errors.companyName && (
                             <small className="text-danger">
-                              {errors.companyPolicy}
+                              {errors.companyName}
                             </small>
                           )}
                         </div>
 
                         {/* Main Category */}
                         <div className="col-md-3">
-                          <label
-                            htmlFor="mainCategory"
-                            className="form-label"
-                            style={{ fontSize: "13px", fontWeight: "bold" }}
-                          >
-                            Main Category
-                          </label>
+                          <label>Main Category</label>
                           <Select
-                            id="mainCategory"
                             options={mainCategoryOptions}
                             onChange={(option) =>
                               handleSelectChange("mainCategory", option)
                             }
                             placeholder="Select a main category"
-                            isClearable
                           />
                           {errors.mainCategory && (
                             <small className="text-danger">
@@ -231,22 +226,14 @@ export default function PolicyForm() {
 
                         {/* Sub Category */}
                         <div className="col-md-3">
-                          <label
-                            htmlFor="subCategory"
-                            className="form-label"
-                            style={{ fontSize: "13px", fontWeight: "bold" }}
-                          >
-                            Sub Category
-                          </label>
+                          <label>Sub Category</label>
                           <Select
-                            id="subCategory"
                             options={subCategoryOptions}
                             onChange={(option) =>
                               handleSelectChange("subCategory", option)
                             }
-                            placeholder="Select a sub category"
-                            isClearable
                           />
+
                           {errors.subCategory && (
                             <small className="text-danger">
                               {errors.subCategory}

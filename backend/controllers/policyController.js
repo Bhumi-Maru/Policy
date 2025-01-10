@@ -46,10 +46,12 @@ const addPolicy = async (req, res) => {
 // Fetch all policies
 const getAllPolicies = async (req, res) => {
   try {
-    const policies = await Policy.find().populate(
-      "clientName",
-      "firstName lastName"
-    );
+    const policies = await Policy.find()
+      .populate("clientName", "firstName lastName")
+      .populate("companyName", "companyName")
+      .populate("mainCategory", "mainCategoryName")
+      .populate("subCategory", "subCategoryName");
+
     return res.status(200).json(policies);
   } catch (error) {
     console.error("Error fetching policies:", error);
@@ -113,10 +115,11 @@ const updatePolicy = async (req, res) => {
 const getPolicyById = async (req, res) => {
   try {
     const { id } = req.params;
-    const policy = await Policy.findById(id).populate(
-      "clientName",
-      "firstName lastName"
-    );
+    const policy = await Policy.findById(id)
+      .populate("clientName", "firstName lastName")
+      .populate("companyName", "companyName")
+      .populate("mainCategory", "mainCategoryName")
+      .populate("subCategory", "subCategoryName");
 
     if (!policy) {
       return res.status(404).json({ message: "Policy not found" });
