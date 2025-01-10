@@ -6,7 +6,7 @@ const {
   updateMainCategory,
   getAllMainCategory,
   getMainCategoryById,
-} = require("../controllers/mainCategoryController");
+} = require("../controllers/mainCategryController");
 
 mainCategoryRouter.post("/mainCategory", addMainCategory);
 

@@ -25,13 +25,19 @@ export default function PolicyTable({ handleMenuClick }) {
   // Filter clients based on search query
   const filteredData = clients.filter((client) => {
     const query = searchQuery.toLowerCase();
+
+    // Extract firstName and lastName from client.clientName
+    const clientName =
+      (client.clientName?.firstName || "") +
+      " " +
+      (client.clientName?.lastName || "");
+
     return (
-      (client.clientName && client.clientName.toLowerCase().includes(query)) ||
-      (client.companyName && client.companyName.includes(query)) ||
-      (client.subCategory &&
-        client.subCategory.toLowerCase().includes(query)) ||
-      (client.expiryDate && client.expiryDate.toLowerCase().includes(query)) ||
-      (client.policyAmount && client.policyAmount.toLowerCase().includes(query))
+      clientName.toLowerCase().includes(query) ||
+      client.companyName?.companyName?.toLowerCase().includes(query) ||
+      client.subCategory?.subCategoryName?.toLowerCase().includes(query) ||
+      client.expiryDate?.toLowerCase().includes(query) ||
+      client.policyAmount?.toLowerCase().includes(query)
     );
   });
 
@@ -96,13 +102,6 @@ export default function PolicyTable({ handleMenuClick }) {
     deleteButton.addEventListener("click", confirmDeletion);
     closeButton.addEventListener("click", cancelDeletion);
   };
-  // const updateClientData = (updatedClient) => {
-  //   setClients((prevClients) =>
-  //     prevClients.map((client) =>
-  //       client._id === updatedClient._id ? updatedClient : client
-  //     )
-  //   );
-  // };
 
   const showDeleteToast = (message) => {
     const toastHTML = `
@@ -153,6 +152,7 @@ export default function PolicyTable({ handleMenuClick }) {
     <>
       <div className="main-content">
         <div className="page-content">
+          {/* table 1 */}
           <div className="container-fluid">
             <div className="row">
               <div className="col-lg-12">
@@ -242,37 +242,7 @@ export default function PolicyTable({ handleMenuClick }) {
                               >
                                 Sub Category
                               </th>
-                              <th
-                                className="expiryDate_sort"
-                                data-sort="address"
-                                style={{
-                                  fontSize: ".8rem",
-                                  fontWeight: "bold",
-                                }}
-                              >
-                                Expiry Date
-                              </th>
-                              <th
-                                className="policyAmount_sort"
-                                data-sort="policyAmount"
-                                style={{
-                                  fontSize: ".8rem",
-                                  fontWeight: "bold",
-                                }}
-                              >
-                                Policy Amount
-                              </th>
-                              <th
-                                className="policyAttachment_sort"
-                                data-sort="doc"
-                                style={{
-                                  fontSize: ".8rem",
-                                  fontWeight: "bold",
-                                  textAlign: "center",
-                                }}
-                              >
-                                Policy Attachment
-                              </th>
+
                               <th
                                 className="action_sort"
                                 data-sort="action"
@@ -307,7 +277,8 @@ export default function PolicyTable({ handleMenuClick }) {
                                     className="client_name"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    {client.clientName}
+                                    {client.clientName?.firstName}{" "}
+                                    {client.clientName?.lastName}
                                   </td>
 
                                   {/* company Name */}
@@ -315,7 +286,7 @@ export default function PolicyTable({ handleMenuClick }) {
                                     className="company_name"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    {client.companyName}
+                                    {client.companyName?.companyName}
                                   </td>
 
                                   {/* Sub Category */}
@@ -323,40 +294,7 @@ export default function PolicyTable({ handleMenuClick }) {
                                     className="sub_category"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    {client.subCategory}
-                                  </td>
-
-                                  {/* Expiry Date */}
-                                  <td
-                                    className="expiry_date"
-                                    style={{ fontSize: ".8rem" }}
-                                  >
-                                    {client.expiryDate}
-                                  </td>
-
-                                  <td
-                                    className="policy_amount"
-                                    style={{ fontSize: ".8rem" }}
-                                  >
-                                    &nbsp; &nbsp; &nbsp; {client.policyAmount}
-                                  </td>
-
-                                  {/* Document Link */}
-                                  <td
-                                    data-column-id="policy attachment"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    <i
-                                      className="ri-pushpin-fill"
-                                      style={{
-                                        color: "#405189",
-                                        cursor: "pointer",
-                                        fontSize: "15px",
-                                      }}
-                                      data-bs-toggle="tooltip"
-                                      data-bs-placement="top"
-                                      data-bs-title={client.policyAttachment}
-                                    ></i>
+                                    {client.subCategory?.subCategoryName}
                                   </td>
 
                                   {/* Edit and Delete Actions */}
@@ -369,9 +307,9 @@ export default function PolicyTable({ handleMenuClick }) {
                                       <div className="edit">
                                         {console.log("Client ID:", clients.id)}
                                         <Link
-                                          to={`/client-update-form/${client._id}`}
+                                          to={`/policy-update-form/${client._id}`}
                                           onClick={() =>
-                                            handleMenuClick("Update Client")
+                                            handleMenuClick("Update Policy")
                                           }
                                           style={{ textDecoration: "none" }}
                                         >

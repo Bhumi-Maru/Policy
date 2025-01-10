@@ -70,10 +70,13 @@ export default function PolicyForm() {
     fetchOptions();
   }, []);
 
-  const clientOptions = clients.map((client) => ({
-    value: client._id,
-    label: `${client.firstName} ${client.lastName}`,
-  }));
+  const clientOptions = clients.map((client) => {
+    const clientName =
+      client.firstName && client.lastName
+        ? `${client.firstName} ${client.lastName}`
+        : "Unknown Client";
+    return { value: client._id, label: clientName };
+  });
 
   // Company dropdown options
   const companyOptions = companies.map((company) => ({
@@ -157,6 +160,7 @@ export default function PolicyForm() {
       className="page-content"
       style={{ overflowY: "scroll", height: "100vh" }}
     >
+      {/* form */}
       <div
         className="container-fluid"
         style={{ left: "120px", position: "relative", width: "80%" }}
@@ -175,7 +179,11 @@ export default function PolicyForm() {
                       <>
                         {/* Client Name */}
                         <div className="col-md-3">
-                          <label>Client Name</label>
+                          <label
+                            style={{ fontSize: "13px", fontWeight: "bold" }}
+                          >
+                            Client Name
+                          </label>
                           <Select
                             options={clientOptions}
                             onChange={(option) =>
@@ -192,7 +200,11 @@ export default function PolicyForm() {
 
                         {/* Company Name */}
                         <div className="col-md-3">
-                          <label>Company Name</label>
+                          <label
+                            style={{ fontSize: "13px", fontWeight: "bold" }}
+                          >
+                            Company Name
+                          </label>
                           <Select
                             options={companyOptions}
                             onChange={(option) =>
@@ -209,7 +221,11 @@ export default function PolicyForm() {
 
                         {/* Main Category */}
                         <div className="col-md-3">
-                          <label>Main Category</label>
+                          <label
+                            style={{ fontSize: "13px", fontWeight: "bold" }}
+                          >
+                            Main Category
+                          </label>
                           <Select
                             options={mainCategoryOptions}
                             onChange={(option) =>
@@ -226,8 +242,13 @@ export default function PolicyForm() {
 
                         {/* Sub Category */}
                         <div className="col-md-3">
-                          <label>Sub Category</label>
+                          <label
+                            style={{ fontSize: "13px", fontWeight: "bold" }}
+                          >
+                            Sub Category
+                          </label>
                           <Select
+                            placeholder="Select a main category"
                             options={subCategoryOptions}
                             onChange={(option) =>
                               handleSelectChange("subCategory", option)
@@ -334,6 +355,7 @@ export default function PolicyForm() {
                           style={{ left: "83%" }}
                         >
                           <button
+                            style={{ fontSize: "13px", fontWeight: "bold" }}
                             type="submit"
                             className="btn w-100 btn-submit"
                           >

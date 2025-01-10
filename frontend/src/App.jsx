@@ -24,6 +24,7 @@ import UserUpdate from "./components/Main Content/User Creation/UserUpdate";
 import UpdateAgent from "./components/Main Content/Agent Add/UpdateAgent";
 import MainCategoryTable from "./components/Main Content/Policy Category/Main Category/MainCategoryTable";
 import SubCategoryTable from "./components/Main Content/Policy Category/Sub Category/SubCategoryTable";
+import UpdatePolicy from "./components/Main Content/Policy Add/UpdatePolicy";
 
 export default function App() {
   const [activeItem, setActiveItem] = useState("");
@@ -82,6 +83,7 @@ export default function App() {
             />
             <Route path="/policy-category-form" element={<PolicyCategory />} />
             <Route path="/policy-add" element={<PolicyForm />} />
+            <Route path="/policy-update-form/:id" element={<UpdatePolicy />} />
             <Route
               path="/policy"
               element={<PolicyTable handleMenuClick={handleMenuClick} />}
