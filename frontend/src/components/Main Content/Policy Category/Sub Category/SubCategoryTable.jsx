@@ -5,7 +5,9 @@ import * as bootstrap from "bootstrap";
 export default function SubCategoryTable({ handleMenuClick }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [subCategories, setSubCategories] = useState([]);
+  const [subCategory, setSubCategory] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editSubCategory, setEditSubCategory] = useState(null);
 
   // Fetch client data from API
   useEffect(() => {
@@ -13,16 +15,16 @@ export default function SubCategoryTable({ handleMenuClick }) {
       try {
         const response = await fetch("http://localhost:8000/api/subCategory");
         const data = await response.json();
-        setSubCategories(data);
+        setSubCategory(data);
       } catch (error) {
-        console.error("Error fetching sub category data:", error);
+        console.error("Error fetching subCategory data:", error);
       }
     };
     fetchData();
   }, []);
 
   // Filter clients based on search query
-  const filteredData = subCategories.filter((subCategory) => {
+  const filteredData = subCategory.filter((subCategory) => {
     const query = searchQuery.toLowerCase();
     return (
       subCategory.subCategoryName &&
@@ -44,7 +46,82 @@ export default function SubCategoryTable({ handleMenuClick }) {
     }
   };
 
-  // Handle deleting a client
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const subCategoryName = e.target.querySelector(
+      "#subcategoryname-field"
+    ).value;
+    try {
+      let response;
+      if (isEditMode && editSubCategory) {
+        response = await fetch(
+          `http://localhost:8000/api/subCategory/${editSubCategory._id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({ subCategoryName }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        response = await fetch("http://localhost:8000/api/subCategory", {
+          method: "POST",
+          body: JSON.stringify({ subCategoryName }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      if (response.ok) {
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("showModal")
+        );
+        modal.hide();
+        e.target.reset();
+        const newSubCategory = await response.json();
+        if (isEditMode) {
+          setSubCategory((prevSubCategory) =>
+            prevSubCategory.map((subCategory) =>
+              subCategory._id === editSubCategory._id
+                ? newSubCategory
+                : subCategory
+            )
+          );
+        } else {
+          setSubCategory((prevSubCategory) => [
+            ...prevSubCategory,
+            newSubCategory,
+          ]);
+        }
+        setIsEditMode(false);
+        setEditSubCategory(null);
+      } else {
+        console.error("Error adding/updating sub category");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  // Handle adding a new company
+  const handleAdd = () => {
+    setIsEditMode(false);
+    setEditSubCategory(null);
+    const modal = new bootstrap.Modal(document.getElementById("showModal"));
+    modal.show();
+  };
+
+  // Handle editing a company
+  const handleEdit = (subCategory) => {
+    setIsEditMode(true);
+    setEditSubCategory(subCategory);
+    const modal = new bootstrap.Modal(document.getElementById("showModal"));
+    modal.show();
+  };
+
+  // Handle deleting a company
   const handleDelete = (subCategoryToDelete) => {
     const modal = new bootstrap.Modal(
       document.getElementById("deleteRecordModal")
@@ -54,43 +131,36 @@ export default function SubCategoryTable({ handleMenuClick }) {
     const deleteButton = document.getElementById("delete-record");
     const closeButton = document.getElementById("btn-close");
 
-    const cleanupListeners = () => {
-      deleteButton.removeEventListener("click", confirmDeletion);
-      closeButton.removeEventListener("click", cancelDeletion);
-    };
-
     const confirmDeletion = async () => {
       try {
         const response = await fetch(
           `http://localhost:8000/api/subCategory/${subCategoryToDelete._id}`,
-          { method: "DELETE" }
+          {
+            method: "DELETE",
+          }
         );
         if (response.ok) {
-          setSubCategories((prevSubCategories) =>
-            prevSubCategories.filter(
+          setSubCategory((prevSubCategory) =>
+            prevSubCategory.filter(
               (subCategory) => subCategory._id !== subCategoryToDelete._id
             )
           );
           modal.hide();
-          showDeleteToast("Record deleted successfully!");
+          showDeleteToast("Sub Category deleted successfully!");
         } else {
           const errorData = await response.json();
-          console.log(errorData);
           showDeleteToast(
-            `Failed to delete sub Category: ${errorData.message}`
+            `Failed to delete sub category: ${errorData.message}`
           );
         }
       } catch (error) {
         console.error("Error deleting sub Category:", error);
         showDeleteToast("An error occurred while deleting the sub category.");
-      } finally {
-        cleanupListeners();
       }
     };
 
     const cancelDeletion = () => {
       modal.hide();
-      cleanupListeners();
     };
 
     deleteButton.addEventListener("click", confirmDeletion);
@@ -145,21 +215,15 @@ export default function SubCategoryTable({ handleMenuClick }) {
                       <div className="row g-4 mb-3 d-flex flex-row-reverse">
                         <div className="col-sm-auto">
                           <div>
-                            <Link
+                            <button
                               type="button"
                               className="btn btn-success add-btn"
-                              id="create-btn"
-                              data-bs-target="#showModal"
-                              to="/policy-add"
-                              onClick={() => handleMenuClick("Add SubCategory")}
-                              style={{
-                                fontSize: "13px",
-                                color: "white",
-                              }}
+                              onClick={handleAdd}
+                              style={{ fontSize: "13px", color: "white" }}
                             >
                               <i className="ri-add-line align-bottom me-1"></i>{" "}
                               Add
-                            </Link>
+                            </button>
                           </div>
                         </div>
                         <div className="col-sm">
@@ -177,7 +241,6 @@ export default function SubCategoryTable({ handleMenuClick }) {
                           </div>
                         </div>
                       </div>
-
                       <div className="table-responsive table-card mt-3 mb-1">
                         <table
                           className="table align-middle table-nowrap"
@@ -187,7 +250,6 @@ export default function SubCategoryTable({ handleMenuClick }) {
                             <tr>
                               <th
                                 className="srno_sort"
-                                data-sort="serial number"
                                 style={{
                                   fontSize: ".8rem",
                                   fontWeight: "bold",
@@ -197,7 +259,6 @@ export default function SubCategoryTable({ handleMenuClick }) {
                               </th>
                               <th
                                 className="name_sort"
-                                data-sort="customer_name"
                                 style={{
                                   fontSize: ".8rem",
                                   fontWeight: "bold",
@@ -207,7 +268,6 @@ export default function SubCategoryTable({ handleMenuClick }) {
                               </th>
                               <th
                                 className="action_sort"
-                                data-sort="action"
                                 style={{
                                   textAlign: "-webkit-center",
                                   fontSize: ".8rem",
@@ -221,27 +281,24 @@ export default function SubCategoryTable({ handleMenuClick }) {
                           <tbody className="list form-check-all">
                             {currentData.length > 0 ? (
                               currentData.map((subCategory, index) => (
-                                <tr key={index}>
+                                <tr key={subCategory._id}>
                                   {/* Serial Number */}
                                   <td
                                     className="serial number"
-                                    data-sort="serial number"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    &nbsp; &nbsp; &nbsp;
-                                    {(currentPage - 1) * rowsPerPage +
+                                    {currentPage * rowsPerPage -
+                                      rowsPerPage +
                                       index +
                                       1}
                                   </td>
-
                                   {/* Company Name */}
                                   <td
-                                    className="subCategory_Name"
+                                    className="subCategory_name"
                                     style={{ fontSize: ".8rem" }}
                                   >
                                     {subCategory.subCategoryName}
                                   </td>
-
                                   {/* Edit and Delete Actions */}
                                   <td>
                                     <div
@@ -250,26 +307,20 @@ export default function SubCategoryTable({ handleMenuClick }) {
                                     >
                                       {/* Edit Button */}
                                       <div className="edit">
-                                        {console.log(
-                                          "Company ID:",
-                                          subCategories.id
-                                        )}
                                         <Link
-                                          to={`/client-update-form/${subCategories._id}`}
+                                          to="#"
                                           onClick={() =>
-                                            handleMenuClick(
-                                              "Update Main Category"
-                                            )
+                                            handleEdit(subCategory)
                                           }
                                           style={{ textDecoration: "none" }}
                                         >
                                           <i className="ri-edit-2-line"></i>
                                         </Link>
                                       </div>
-
                                       {/* Delete Button */}
                                       <div className="remove">
                                         <Link
+                                          to="#"
                                           onClick={() =>
                                             handleDelete(subCategory)
                                           }
@@ -323,7 +374,6 @@ export default function SubCategoryTable({ handleMenuClick }) {
                           </tbody>
                         </table>
                       </div>
-
                       <div
                         className="gridjs-footer"
                         style={{ boxShadow: "none" }}
@@ -341,7 +391,7 @@ export default function SubCategoryTable({ handleMenuClick }) {
                               <b>
                                 {Math.min(
                                   currentPage * rowsPerPage,
-                                  subCategories.length
+                                  subCategory.length
                                 )}
                               </b>{" "}
                               of <b>{filteredData.length}</b> results
@@ -404,62 +454,130 @@ export default function SubCategoryTable({ handleMenuClick }) {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div
-              className="modal fade zoomIn"
-              id="deleteRecordModal"
-              tabindex="-1"
-              aria-hidden="true"
-            >
-              <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
-                  <div
-                    className="modal-header"
-                    style={{ borderBottom: "none" }}
-                  >
-                    <button
-                      type="button"
-                      class="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                      id="btn-close"
-                    ></button>
-                  </div>
-                  <div class="modal-body">
-                    <div class="mt-2 text-center">
-                      <lord-icon
-                        src="https://cdn.lordicon.com/gsqxdxog.json"
-                        trigger="loop"
-                        colors="primary:#f7b84b,secondary:#f06548"
-                        style={{ width: "100px", height: "100px" }}
-                      ></lord-icon>
-                      <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                        <h4>Are you Sure?</h4>
-                        <p class="text-muted mx-4 mb-0">
-                          Are you sure you want to remove this record?
-                        </p>
-                      </div>
-                    </div>
-                    <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                      <button
-                        type="button"
-                        class="btn w-sm btn-light close-btn"
-                        data-bs-dismiss="modal"
-                      >
-                        Close
-                      </button>
-                      <button
-                        type="button"
-                        class="btn w-sm btn-danger remove"
-                        id="delete-record"
-                      >
-                        Yes, Delete It!
-                      </button>
-                    </div>
-                  </div>
+      {/* Delete Modal */}
+      <div
+        className="modal fade zoomIn"
+        id="deleteRecordModal"
+        tabIndex="-1"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header" style={{ borderBottom: "none" }}>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                id="btn-close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="mt-2 text-center">
+                <lord-icon
+                  src="https://cdn.lordicon.com/gsqxdxog.json"
+                  trigger="loop"
+                  colors="primary:#f7b84b,secondary:#f06548"
+                  style={{ width: "100px", height: "100px" }}
+                ></lord-icon>
+                <div className="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                  <h4>Are you Sure?</h4>
+                  <p className="text-muted mx-4 mb-0">
+                    Are you sure you want to remove this record?
+                  </p>
                 </div>
               </div>
+              <div className="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button
+                  type="button"
+                  className="btn w-sm btn-light close-btn"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn w-sm btn-danger remove"
+                  id="delete-record"
+                >
+                  Yes, Delete It!
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add/Edit Modal */}
+      <div
+        className="modal fade"
+        id="showModal"
+        tabIndex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-light p-3">
+              <h5
+                className="modal-title"
+                id="exampleModalLabel"
+                style={{ fontSize: "16.25px", color: "#495057" }}
+              >
+                {isEditMode ? "Edit Sub Category" : "Add Sub Category"}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body p-4">
+                <div className="mb-3">
+                  <label
+                    htmlFor="subcategoryname-field"
+                    className="form-label"
+                    style={{ fontSize: "13px", color: "#495057" }}
+                  >
+                    Sub Category Name
+                  </label>
+                  <input
+                    type="text"
+                    id="subcategoryname-field"
+                    className="form-control"
+                    defaultValue={
+                      isEditMode ? editSubCategory.subCategoryName : ""
+                    }
+                    required
+                    placeholder="Enter company name"
+                    style={{ fontSize: "13px" }}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-light cancel-btn"
+                  data-bs-dismiss="modal"
+                  style={{ fontSize: "13px" }}
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary submit-btn"
+                  style={{ fontSize: "13px" }}
+                >
+                  {isEditMode ? "Update" : "Add"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

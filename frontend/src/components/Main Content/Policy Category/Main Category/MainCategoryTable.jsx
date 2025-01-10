@@ -5,7 +5,9 @@ import * as bootstrap from "bootstrap";
 export default function MainCategoryTable({ handleMenuClick }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [mainCategories, setMainCategories] = useState([]);
+  const [mainCategory, setMainCategory] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editMainCategory, setEditMainCategory] = useState(null);
 
   // Fetch client data from API
   useEffect(() => {
@@ -13,16 +15,16 @@ export default function MainCategoryTable({ handleMenuClick }) {
       try {
         const response = await fetch("http://localhost:8000/api/mainCategory");
         const data = await response.json();
-        setMainCategories(data);
+        mainCategory(data);
       } catch (error) {
-        console.error("Error fetching main category data:", error);
+        console.error("Error fetching mainCategory data:", error);
       }
     };
     fetchData();
   }, []);
 
   // Filter clients based on search query
-  const filteredData = mainCategories.filter((mainCategory) => {
+  const filteredData = mainCategory.filter((mainCategory) => {
     const query = searchQuery.toLowerCase();
     return (
       mainCategory.mainCategoryName &&
@@ -44,7 +46,82 @@ export default function MainCategoryTable({ handleMenuClick }) {
     }
   };
 
-  // Handle deleting a client
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const mainCategoryName = e.target.querySelector(
+      "#customername-field"
+    ).value;
+    try {
+      let response;
+      if (isEditMode && editMainCategory) {
+        response = await fetch(
+          `http://localhost:8000/api/mainCategory/${editMainCategory._id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({ mainCategoryName }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        response = await fetch("http://localhost:8000/api/mainCategory", {
+          method: "POST",
+          body: JSON.stringify({ mainCategoryName }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      if (response.ok) {
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("showModal")
+        );
+        modal.hide();
+        e.target.reset();
+        const newMainCategory = await response.json();
+        if (isEditMode) {
+          setMainCategory((prevMainCategory) =>
+            prevMainCategory.map((mainCategory) =>
+              mainCategory._id === editMainCategory._id
+                ? newMainCategory
+                : mainCategory
+            )
+          );
+        } else {
+          setMainCategory((prevMainCategory) => [
+            ...prevMainCategory,
+            newMainCategory,
+          ]);
+        }
+        setIsEditMode(false);
+        setEditMainCategory(null);
+      } else {
+        console.error("Error adding/updating main category");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  // Handle adding a new company
+  const handleAdd = () => {
+    setIsEditMode(false);
+    setEditMainCategory(null);
+    const modal = new bootstrap.Modal(document.getElementById("showModal"));
+    modal.show();
+  };
+
+  // Handle editing a company
+  const handleEdit = (mainCategory) => {
+    setIsEditMode(true);
+    setEditMainCategory(mainCategory);
+    const modal = new bootstrap.Modal(document.getElementById("showModal"));
+    modal.show();
+  };
+
+  // Handle deleting a company
   const handleDelete = (mainCategoryToDelete) => {
     const modal = new bootstrap.Modal(
       document.getElementById("deleteRecordModal")
@@ -54,43 +131,36 @@ export default function MainCategoryTable({ handleMenuClick }) {
     const deleteButton = document.getElementById("delete-record");
     const closeButton = document.getElementById("btn-close");
 
-    const cleanupListeners = () => {
-      deleteButton.removeEventListener("click", confirmDeletion);
-      closeButton.removeEventListener("click", cancelDeletion);
-    };
-
     const confirmDeletion = async () => {
       try {
         const response = await fetch(
           `http://localhost:8000/api/mainCategory/${mainCategoryToDelete._id}`,
-          { method: "DELETE" }
+          {
+            method: "DELETE",
+          }
         );
         if (response.ok) {
-          setMainCategories((prevMainCategories) =>
-            prevMainCategories.filter(
+          setMainCategory((prevMainCategory) =>
+            prevMainCategory.filter(
               (mainCategory) => mainCategory._id !== mainCategoryToDelete._id
             )
           );
           modal.hide();
-          showDeleteToast("Record deleted successfully!");
+          showDeleteToast("Main Category deleted successfully!");
         } else {
           const errorData = await response.json();
-          console.log(errorData);
           showDeleteToast(
-            `Failed to delete main Category: ${errorData.message}`
+            `Failed to delete main category: ${errorData.message}`
           );
         }
       } catch (error) {
-        console.error("Error deleting main category:", error);
+        console.error("Error deleting main Category:", error);
         showDeleteToast("An error occurred while deleting the main category.");
-      } finally {
-        cleanupListeners();
       }
     };
 
     const cancelDeletion = () => {
       modal.hide();
-      cleanupListeners();
     };
 
     deleteButton.addEventListener("click", confirmDeletion);
@@ -145,23 +215,15 @@ export default function MainCategoryTable({ handleMenuClick }) {
                       <div className="row g-4 mb-3 d-flex flex-row-reverse">
                         <div className="col-sm-auto">
                           <div>
-                            <Link
+                            <button
                               type="button"
                               className="btn btn-success add-btn"
-                              id="create-btn"
-                              data-bs-target="#showModal"
-                              to="/policy-add"
-                              onClick={() =>
-                                handleMenuClick("Add Main Category")
-                              }
-                              style={{
-                                fontSize: "13px",
-                                color: "white",
-                              }}
+                              onClick={handleAdd}
+                              style={{ fontSize: "13px", color: "white" }}
                             >
-                              <i className="ri-add-line align-bottom me-1"></i>
+                              <i className="ri-add-line align-bottom me-1"></i>{" "}
                               Add
-                            </Link>
+                            </button>
                           </div>
                         </div>
                         <div className="col-sm">
@@ -179,7 +241,6 @@ export default function MainCategoryTable({ handleMenuClick }) {
                           </div>
                         </div>
                       </div>
-
                       <div className="table-responsive table-card mt-3 mb-1">
                         <table
                           className="table align-middle table-nowrap"
@@ -189,7 +250,6 @@ export default function MainCategoryTable({ handleMenuClick }) {
                             <tr>
                               <th
                                 className="srno_sort"
-                                data-sort="serial number"
                                 style={{
                                   fontSize: ".8rem",
                                   fontWeight: "bold",
@@ -199,7 +259,6 @@ export default function MainCategoryTable({ handleMenuClick }) {
                               </th>
                               <th
                                 className="name_sort"
-                                data-sort="customer_name"
                                 style={{
                                   fontSize: ".8rem",
                                   fontWeight: "bold",
@@ -209,7 +268,6 @@ export default function MainCategoryTable({ handleMenuClick }) {
                               </th>
                               <th
                                 className="action_sort"
-                                data-sort="action"
                                 style={{
                                   textAlign: "-webkit-center",
                                   fontSize: ".8rem",
@@ -223,27 +281,24 @@ export default function MainCategoryTable({ handleMenuClick }) {
                           <tbody className="list form-check-all">
                             {currentData.length > 0 ? (
                               currentData.map((mainCategory, index) => (
-                                <tr key={index}>
+                                <tr key={mainCategory._id}>
                                   {/* Serial Number */}
                                   <td
                                     className="serial number"
-                                    data-sort="serial number"
                                     style={{ fontSize: ".8rem" }}
                                   >
-                                    &nbsp; &nbsp; &nbsp;
-                                    {(currentPage - 1) * rowsPerPage +
+                                    {currentPage * rowsPerPage -
+                                      rowsPerPage +
                                       index +
                                       1}
                                   </td>
-
                                   {/* Company Name */}
                                   <td
-                                    className="mainCategory_Name"
+                                    className="mainCategory_name"
                                     style={{ fontSize: ".8rem" }}
                                   >
                                     {mainCategory.mainCategoryName}
                                   </td>
-
                                   {/* Edit and Delete Actions */}
                                   <td>
                                     <div
@@ -252,26 +307,20 @@ export default function MainCategoryTable({ handleMenuClick }) {
                                     >
                                       {/* Edit Button */}
                                       <div className="edit">
-                                        {console.log(
-                                          "Company ID:",
-                                          mainCategories.id
-                                        )}
                                         <Link
-                                          to={`/client-update-form/${mainCategories._id}`}
+                                          to="#"
                                           onClick={() =>
-                                            handleMenuClick(
-                                              "Update Main Category"
-                                            )
+                                            handleEdit(mainCategory)
                                           }
                                           style={{ textDecoration: "none" }}
                                         >
                                           <i className="ri-edit-2-line"></i>
                                         </Link>
                                       </div>
-
                                       {/* Delete Button */}
                                       <div className="remove">
                                         <Link
+                                          to="#"
                                           onClick={() =>
                                             handleDelete(mainCategory)
                                           }
@@ -325,7 +374,6 @@ export default function MainCategoryTable({ handleMenuClick }) {
                           </tbody>
                         </table>
                       </div>
-
                       <div
                         className="gridjs-footer"
                         style={{ boxShadow: "none" }}
@@ -343,7 +391,7 @@ export default function MainCategoryTable({ handleMenuClick }) {
                               <b>
                                 {Math.min(
                                   currentPage * rowsPerPage,
-                                  mainCategories.length
+                                  mainCategory.length
                                 )}
                               </b>{" "}
                               of <b>{filteredData.length}</b> results
@@ -406,62 +454,130 @@ export default function MainCategoryTable({ handleMenuClick }) {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div
-              className="modal fade zoomIn"
-              id="deleteRecordModal"
-              tabindex="-1"
-              aria-hidden="true"
-            >
-              <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
-                  <div
-                    className="modal-header"
-                    style={{ borderBottom: "none" }}
-                  >
-                    <button
-                      type="button"
-                      class="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                      id="btn-close"
-                    ></button>
-                  </div>
-                  <div class="modal-body">
-                    <div class="mt-2 text-center">
-                      <lord-icon
-                        src="https://cdn.lordicon.com/gsqxdxog.json"
-                        trigger="loop"
-                        colors="primary:#f7b84b,secondary:#f06548"
-                        style={{ width: "100px", height: "100px" }}
-                      ></lord-icon>
-                      <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                        <h4>Are you Sure?</h4>
-                        <p class="text-muted mx-4 mb-0">
-                          Are you sure you want to remove this record?
-                        </p>
-                      </div>
-                    </div>
-                    <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                      <button
-                        type="button"
-                        class="btn w-sm btn-light close-btn"
-                        data-bs-dismiss="modal"
-                      >
-                        Close
-                      </button>
-                      <button
-                        type="button"
-                        class="btn w-sm btn-danger remove"
-                        id="delete-record"
-                      >
-                        Yes, Delete It!
-                      </button>
-                    </div>
-                  </div>
+      {/* Delete Modal */}
+      <div
+        className="modal fade zoomIn"
+        id="deleteRecordModal"
+        tabIndex="-1"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header" style={{ borderBottom: "none" }}>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                id="btn-close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="mt-2 text-center">
+                <lord-icon
+                  src="https://cdn.lordicon.com/gsqxdxog.json"
+                  trigger="loop"
+                  colors="primary:#f7b84b,secondary:#f06548"
+                  style={{ width: "100px", height: "100px" }}
+                ></lord-icon>
+                <div className="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                  <h4>Are you Sure?</h4>
+                  <p className="text-muted mx-4 mb-0">
+                    Are you sure you want to remove this record?
+                  </p>
                 </div>
               </div>
+              <div className="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button
+                  type="button"
+                  className="btn w-sm btn-light close-btn"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn w-sm btn-danger remove"
+                  id="delete-record"
+                >
+                  Yes, Delete It!
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add/Edit Modal */}
+      <div
+        className="modal fade"
+        id="showModal"
+        tabIndex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-light p-3">
+              <h5
+                className="modal-title"
+                id="exampleModalLabel"
+                style={{ fontSize: "16.25px", color: "#495057" }}
+              >
+                {isEditMode ? "Edit Main Category" : "Add Main Category"}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body p-4">
+                <div className="mb-3">
+                  <label
+                    htmlFor="customername-field"
+                    className="form-label"
+                    style={{ fontSize: "13px", color: "#495057" }}
+                  >
+                    Main Category Name
+                  </label>
+                  <input
+                    type="text"
+                    id="customername-field"
+                    className="form-control"
+                    defaultValue={
+                      isEditMode ? editMainCategory.mainCategoryName : ""
+                    }
+                    required
+                    placeholder="Enter company name"
+                    style={{ fontSize: "13px" }}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-light cancel-btn"
+                  data-bs-dismiss="modal"
+                  style={{ fontSize: "13px" }}
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary submit-btn"
+                  style={{ fontSize: "13px" }}
+                >
+                  {isEditMode ? "Update" : "Add"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
