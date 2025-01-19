@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import Select from "react-select";
+import * as bootstrap from "bootstrap";
 
 export default function UpdatePolicy() {
   const { id } = useParams();
@@ -23,6 +24,7 @@ export default function UpdatePolicy() {
   const [companies, setCompanies] = useState([]);
   const [mainCategories, setMainCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
 
   console.log("clients" + clients);
   console.log("policy data ", policy);
@@ -146,7 +148,6 @@ export default function UpdatePolicy() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     const formDataWithFiles = new FormData();
@@ -155,20 +156,58 @@ export default function UpdatePolicy() {
     });
 
     try {
-      const response = await fetch("http://localhost:8000/api/policy", {
-        method: "POST",
-        body: formDataWithFiles,
-      });
+      let response;
+      if (selectedPolicy) {
+        // Update existing policy
+        response = await fetch(
+          `http://localhost:8000/api/policy/${selectedPolicy._id}`,
+          {
+            method: "PUT",
+            body: formDataWithFiles,
+          }
+        );
+      } else {
+        // Create new policy
+        response = await fetch("http://localhost:8000/api/policy", {
+          method: "POST",
+          body: formDataWithFiles,
+        });
+      }
 
       if (response.ok) {
-        navigate("/policy");
+        const updatedPolicyData = await response.json();
+        setPolicy((prevPolicy) => {
+          if (selectedPolicy) {
+            return prevPolicy.map((p) =>
+              p._id === selectedPolicy._id ? updatedPolicyData : p
+            );
+          } else {
+            // Add new policy to the existing array
+            return [...prevPolicy, updatedPolicyData];
+          }
+        });
+        navigate("/policy"); // Navigate back to the policy list page
       } else {
-        alert("Failed to create policy. Please try again.");
+        alert("Failed to submit. Please try again.");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("Error submitting form. Please check your network connection.");
     }
+  };
+
+  const handleEdit = (policyData) => {
+    setSelectedPolicy(policyData);
+    setFormData({
+      clientName: policyData.clientName,
+      companyPolicy: policyData.companyPolicy,
+      mainCategory: policyData.mainCategory,
+      subCategory: policyData.subCategory,
+      issueDate: policyData.issueDate,
+      expiryDate: policyData.expiryDate,
+      policyAmount: policyData.policyAmount,
+      policyAttachment: policyData.policyAttachment,
+    });
   };
 
   // pagination
@@ -184,6 +223,16 @@ export default function UpdatePolicy() {
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
+
+  // Initialize tooltips for table rows
+  useEffect(() => {
+    const tooltipTriggerList = Array.from(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+    tooltipTriggerList.forEach((tooltipTriggerEl) => {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }, [policy]);
 
   return (
     <div
@@ -434,7 +483,7 @@ export default function UpdatePolicy() {
                             className="btn w-30 btn-submit"
                             style={{ fontSize: "13px" }}
                           >
-                            Add
+                            {selectedPolicy ? "Update" : "Add"}
                           </button>
                           <button
                             type="submit"
@@ -527,8 +576,8 @@ export default function UpdatePolicy() {
                         </tr>
                       </thead>
                       <tbody className="list form-check-all">
-                        {currentData.length > 0 ? (
-                          currentData.map((client, index) => (
+                        {policy.length > 0 ? (
+                          policy.map((policy, index) => (
                             <tr key={index}>
                               {/* Serial Number */}
                               <td
@@ -556,13 +605,13 @@ export default function UpdatePolicy() {
                                 className="expiry_date"
                                 style={{ fontSize: ".8rem" }}
                               >
-                                {client.expiryDate}
+                                {policy.expiryDate}
                               </td>
                               <td
                                 className="policy_amount"
                                 style={{ fontSize: ".8rem" }}
                               >
-                                &nbsp; &nbsp; &nbsp; {client.policyAmount}
+                                &nbsp; &nbsp; &nbsp; {policy.policyAmount}
                               </td>
                               {/* Document Link */}
                               <td
@@ -578,7 +627,9 @@ export default function UpdatePolicy() {
                                   }}
                                   data-bs-toggle="tooltip"
                                   data-bs-placement="top"
-                                  data-bs-title={client.policyAttachment}
+                                  data-bs-title={policy.policyAttachment
+                                    .split("/")
+                                    .pop()}
                                 ></i>
                               </td>
                               {/* Edit and Delete Actions */}
@@ -591,10 +642,8 @@ export default function UpdatePolicy() {
                                   <div className="edit">
                                     {console.log("Client ID:", clients.id)}
                                     <Link
-                                      to={`/policy-update-form/${client._id}`}
-                                      //   onClick={() =>
-                                      //     handleMenuClick("Update policy")
-                                      //   }
+                                      to={`/policy-update-form/${policy._id}`}
+                                      onClick={() => handleEdit(policy)}
                                       style={{ textDecoration: "none" }}
                                     >
                                       <i className="ri-edit-2-line"></i>
@@ -729,256 +778,6 @@ export default function UpdatePolicy() {
           </div>
         </div>
       </div>
-      {/* <div className="container-fluid">
-        <div className="row">
-          <div className="col-lg-12">
-            <div className="card" style={{ border: "none" }}>
-              <div className="card-body">
-                <div className="listjs-table" id="customerList">
-                  <div className="table-responsive table-card mt-3 mb-1">
-                    <table
-                      className="table align-middle table-nowrap"
-                      id="customerTable"
-                    >
-                      <thead className="table-light">
-                        <tr>
-                          <th
-                            className="srno_sort"
-                            data-sort="serial number"
-                            style={{
-                              fontSize: ".8rem",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            SR No.
-                          </th>
-                          Expiry Date
-                          <th
-                            className="expiryDate_sort"
-                            data-sort="address"
-                            style={{
-                              fontSize: ".8rem",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Expiry Date
-                          </th>
-                          policyAmount 
-                          <th
-                            className="policyAmount_sort"
-                            data-sort="policyAmount"
-                            style={{
-                              fontSize: ".8rem",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Policy Amount
-                          </th>
-                          Policy Attachment
-                          <th
-                            className="policyAttachment_sort"
-                            data-sort="doc"
-                            style={{
-                              fontSize: ".8rem",
-                              fontWeight: "bold",
-                              textAlign: "center",
-                            }}
-                          >
-                            Policy Attachment
-                          </th>
-                          <th
-                            className="action_sort"
-                            data-sort="action"
-                            style={{
-                              textAlign: "-webkit-center",
-                              fontSize: ".8rem",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Action
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="list form-check-all">
-                        {currentData.length > 0 ? (
-                          currentData.map((client, index) => (
-                            <tr key={index}>
-                              Serial Number
-                              <td
-                                className="serial number"
-                                data-sort="serial number"
-                                style={{ fontSize: ".8rem" }}
-                              >
-                                &nbsp; &nbsp; &nbsp;
-                                {(currentPage - 1) * rowsPerPage + index + 1}
-                              </td>
-
-                              Expiry Date
-                              <td
-                                className="expiry_date"
-                                style={{ fontSize: ".8rem" }}
-                              >
-                                {client.expiryDate}
-                              </td>
-
-                              <td
-                                className="policy_amount"
-                                style={{ fontSize: ".8rem" }}
-                              >
-                                &nbsp; &nbsp; &nbsp; {client.policyAmount}
-                              </td>
-
-                              Document Link
-                              <td
-                                data-column-id="policy attachment"
-                                style={{ textAlign: "center" }}
-                              >
-                                <i
-                                  className="ri-pushpin-fill"
-                                  style={{
-                                    color: "#405189",
-                                    cursor: "pointer",
-                                    fontSize: "15px",
-                                  }}
-                                  data-bs-toggle="tooltip"
-                                  data-bs-placement="top"
-                                  data-bs-title={client.policyAttachment}
-                                ></i>
-                              </td>
-
-                              Edit and Delete Actions
-                              <td>
-                                <div
-                                  className="d-flex gap-2 justify-content-center"
-                                  style={{ textAlign: "-webkit-center" }}
-                                >
-                                  Edit Button
-                                  <div className="edit">
-                                    {console.log("Client ID:", clients.id)}
-                                    <Link
-                                      to={`/policy-update-form/${client._id}`}
-                                      onClick={() =>
-                                        handleMenuClick("Update policy")
-                                      }
-                                      style={{ textDecoration: "none" }}
-                                    >
-                                      <i className="ri-edit-2-line"></i>
-                                    </Link>
-                                  </div>
-
-                                  Delete Button
-                                  <div className="remove">
-                                    <Link
-                                      onClick={() => handleDelete(client)}
-                                      style={{ textDecoration: "none" }}
-                                    >
-                                      <i className="ri-delete-bin-2-line"></i>
-                                    </Link>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="7">
-                              <div className="noresult">
-                                <div className="text-center">
-                                  <lord-icon
-                                    src="https://cdn.lordicon.com/msoeawqm.json"
-                                    trigger="loop"
-                                    colors="primary:#121331,secondary:#08a88a"
-                                    style={{
-                                      width: "75px",
-                                      height: "75px",
-                                    }}
-                                  ></lord-icon>
-                                  <h5
-                                    className="mt-2"
-                                    style={{
-                                      fontSize: "16.25px",
-                                      color: "#495957",
-                                    }}
-                                  >
-                                    Sorry! No Result Found
-                                  </h5>
-                                  <p
-                                    className="text-muted mb-0"
-                                    style={{
-                                      fontSize: "13px",
-                                      color: "#878A99",
-                                    }}
-                                  >
-                                    We've searched more than 150+ Orders. We did
-                                    not find any orders for your search.
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="modal fade zoomIn"
-          id="deleteRecordModal"
-          tabindex="-1"
-          aria-hidden="true"
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header" style={{ borderBottom: "none" }}>
-                <button
-                  type="button"
-                  class="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                  id="btn-close"
-                ></button>
-              </div>
-              <div class="modal-body">
-                <div class="mt-2 text-center">
-                  <lord-icon
-                    src="https://cdn.lordicon.com/gsqxdxog.json"
-                    trigger="loop"
-                    colors="primary:#f7b84b,secondary:#f06548"
-                    style={{ width: "100px", height: "100px" }}
-                  ></lord-icon>
-                  <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <h4>Are you Sure?</h4>
-                    <p class="text-muted mx-4 mb-0">
-                      Are you sure you want to remove this record?
-                    </p>
-                  </div>
-                </div>
-                <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                  <button
-                    type="button"
-                    class="btn w-sm btn-light close-btn"
-                    data-bs-dismiss="modal"
-                  >
-                    Close
-                  </button>
-                  <button
-                    type="button"
-                    class="btn w-sm btn-danger remove"
-                    id="delete-record"
-                  >
-                    Yes, Delete It!
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 }
