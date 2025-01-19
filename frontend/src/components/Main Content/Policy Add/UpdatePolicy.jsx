@@ -5,9 +5,9 @@ import Select from "react-select";
 export default function UpdatePolicy() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [errors, setErrors] = useState({});
   const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     clientName: "",
@@ -19,16 +19,18 @@ export default function UpdatePolicy() {
     policyAmount: "",
     policyAttachment: null,
   });
+  const [policy, setPolicy] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [mainCategories, setMainCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
 
   console.log("clients" + clients);
+  console.log("policy data ", policy);
   useEffect(() => {
     const fetchOptions = async () => {
-      setLoading(true);
       setError(null);
       try {
+        const policyRes = await fetch("http://localhost:8000/api/policy");
         const clientRes = await fetch("http://localhost:8000/api/clients");
         const companyRes = await fetch("http://localhost:8000/api/company");
         const mainCategoryRes = await fetch(
@@ -39,6 +41,7 @@ export default function UpdatePolicy() {
         );
 
         if (
+          !policyRes ||
           !clientRes.ok ||
           !companyRes.ok ||
           !mainCategoryRes.ok ||
@@ -47,37 +50,37 @@ export default function UpdatePolicy() {
           throw new Error("Failed to fetch data");
         }
 
+        const policyData = await policyRes.json();
         const clientsData = await clientRes.json();
         const companiesData = await companyRes.json();
         const mainCategoryData = await mainCategoryRes.json();
         const subCategoryData = await subCategoryRes.json();
 
+        setPolicy(policyData);
         setClients(clientsData);
         setCompanies(companiesData);
         setMainCategories(mainCategoryData);
         setSubCategories(subCategoryData);
 
         // Fetch the existing policy data for the given `id`
-        const policyRes = await fetch(`http://localhost:8000/api/policy/${id}`);
-        if (policyRes.ok) {
-          const policyData = await policyRes.json();
-          setFormData({
-            clientName: policyData.clientName,
-            companyPolicy: policyData.companyPolicy,
-            mainCategory: policyData.mainCategory,
-            subCategory: policyData.subCategory,
-            issueDate: policyData.issueDate,
-            expiryDate: policyData.expiryDate,
-            policyAmount: policyData.policyAmount,
-            policyAttachment: policyData.policyAttachment,
-          });
-        } else {
-          throw new Error("Failed to fetch policy data");
-        }
+        // const policyRes = await fetch(`http://localhost:8000/api/policy/${id}`);
+        // if (policyRes.ok) {
+        //   const policyData = await policyRes.json();
+        //   setFormData({
+        //     clientName: policyData.clientName,
+        //     companyPolicy: policyData.companyPolicy,
+        //     mainCategory: policyData.mainCategory,
+        //     subCategory: policyData.subCategory,
+        //     issueDate: policyData.issueDate,
+        //     expiryDate: policyData.expiryDate,
+        //     policyAmount: policyData.policyAmount,
+        //     policyAttachment: policyData.policyAttachment,
+        //   });
+        // } else {
+        //   throw new Error("Failed to fetch policy data");
+        // }
       } catch (err) {
         setError(err.message);
-      } finally {
-        setLoading(false);
       }
     };
     fetchOptions();
@@ -168,6 +171,20 @@ export default function UpdatePolicy() {
     }
   };
 
+  // pagination
+  const rowsPerPage = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(clients.length / rowsPerPage);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) setCurrentPage(newPage);
+  };
+
+  const currentData = clients.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   return (
     <div
       className="page-content"
@@ -184,9 +201,7 @@ export default function UpdatePolicy() {
               <div className="card-body">
                 <div className="live-preview">
                   <form onSubmit={handleSubmit} className="row g-3">
-                    {loading ? (
-                      <p>Loading options...</p>
-                    ) : error ? (
+                    {error ? (
                       <p className="text-danger">Error: {error}</p>
                     ) : (
                       <>
@@ -312,9 +327,7 @@ export default function UpdatePolicy() {
               <div className="card-body">
                 <div className="live-preview">
                   <form onSubmit={handleSubmit} className="row g-3">
-                    {loading ? (
-                      <p>Loading options...</p>
-                    ) : error ? (
+                    {error ? (
                       <p className="text-danger">Error: {error}</p>
                     ) : (
                       <>
@@ -408,14 +421,27 @@ export default function UpdatePolicy() {
                         {/* Submit Button */}
                         <div
                           className="col-md-2 position-relative"
-                          style={{ top: "29px" }}
+                          style={{
+                            top: "16px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "5px",
+                          }}
                         >
                           <button
                             type="submit"
-                            className="btn w-100 btn-submit"
+                            className="btn w-30 btn-submit"
                             style={{ fontSize: "13px" }}
                           >
-                            Submit
+                            Add
+                          </button>
+                          <button
+                            type="submit"
+                            className="btn w-30 btn-submit"
+                            style={{ fontSize: "13px" }}
+                          >
+                            Bin
                           </button>
                         </div>
                       </>
@@ -441,6 +467,17 @@ export default function UpdatePolicy() {
                             }}
                           >
                             SR No.
+                          </th>
+                          {/* Issue Date */}
+                          <th
+                            className="issueDate_sort"
+                            data-sort="address"
+                            style={{
+                              fontSize: ".8rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            Issue Date
                           </th>
                           {/* Expiry Date */}
                           <th
@@ -490,18 +527,30 @@ export default function UpdatePolicy() {
                         </tr>
                       </thead>
                       <tbody className="list form-check-all">
-                        {clients.length > 0 ? (
-                          clients.map((client, index) => (
+                        {currentData.length > 0 ? (
+                          currentData.map((client, index) => (
                             <tr key={index}>
                               {/* Serial Number */}
-                              {/* <td
+                              <td
                                 className="serial number"
                                 data-sort="serial number"
                                 style={{ fontSize: ".8rem" }}
                               >
                                 &nbsp; &nbsp; &nbsp;
                                 {(currentPage - 1) * rowsPerPage + index + 1}
-                              </td> */}
+                              </td>
+                              {/* Issue Date */}
+                              <td
+                                className="issue_date"
+                                style={{ fontSize: ".8rem" }}
+                              >
+                                {policy.issueDate}
+                                {console.log(
+                                  "policy issueDate",
+                                  policy[0]?.issueDate
+                                )}
+                              </td>
+
                               {/* Expiry Date */}
                               <td
                                 className="expiry_date"
@@ -604,6 +653,75 @@ export default function UpdatePolicy() {
                         )}
                       </tbody>
                     </table>
+                  </div>
+                  {/* pagination */}
+                  <div className="gridjs-footer" style={{ boxShadow: "none" }}>
+                    {currentData.length > 0 && (
+                      <div className="gridjs-pagination">
+                        <div
+                          style={{ fontSize: "13px" }}
+                          role="status"
+                          aria-live="polite"
+                          className="gridjs-summary"
+                        >
+                          Showing <b>{(currentPage - 1) * rowsPerPage + 1}</b>{" "}
+                          to{" "}
+                          <b>
+                            {Math.min(
+                              currentPage * rowsPerPage,
+                              clients.length
+                            )}
+                          </b>{" "}
+                          of <b>{currentData.length}</b> results
+                        </div>
+                        <div className="gridjs-pages">
+                          <button
+                            style={{ fontSize: "13px", cursor: "pointer" }}
+                            tabIndex="0"
+                            role="button"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            title="Previous"
+                            aria-label="Previous"
+                          >
+                            Previous
+                          </button>
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <button
+                              key={i}
+                              style={{
+                                fontSize: "13px",
+                                backgroundColor:
+                                  currentPage === i + 1 ? "#405189" : "",
+                              }}
+                              tabIndex="0"
+                              role="button"
+                              className={
+                                currentPage === i + 1
+                                  ? "gridjs-currentPage"
+                                  : ""
+                              }
+                              onClick={() => handlePageChange(i + 1)}
+                              title={`Page ${i + 1}`}
+                              aria-label={`Page ${i + 1}`}
+                            >
+                              {i + 1}
+                            </button>
+                          ))}
+                          <button
+                            style={{ fontSize: "13px" }}
+                            tabIndex="0"
+                            role="button"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            title="Next"
+                            aria-label="Next"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
